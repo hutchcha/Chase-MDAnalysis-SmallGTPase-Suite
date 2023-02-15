@@ -11,16 +11,21 @@ import matplotlib.pylab as plb
 import math as math
 import MDAnalysis.transformations as trn
 import scipy as sci
-#this program measures the distance between the alpha carbon of the farnesylated cysteine residue 
+#this First calculates the the inertial moments of the protein, and then uses Singular Value Decomposition to calculate the eigenvectors corresponding xyz principal axes of the protein of interest.
 
 
+# This decides what values to modify your plot xvalues by, if ommitted it will simply plot the index of the result array. 
 def numfmt(x, pos): # your custom formatter function: divide by 10
     s = '{}'.format(x / 10)
     return s
 yfmt = tkr.FuncFormatter(numfmt)
+
+
 u = mda.Universe("sys.psf", "wrapprod.dcd")
 import math as math
 ag = u.select_atoms("(protein and name CA) and not resid 170:180 and not resname CYSF")
+#This function calculates the principal axes of the protein by first calculating the inertial moments of the protein, and then Decomposing the resultant matrix to yield unit vectors corresponding to the xyz principal axes of the protein. For Simplicity, this only uses the alpha carbon atoms of each protein residue, can obviously be modified to use all protein backbone atoms
+#It is very important to note that this calculation is technically for a rigid body, and therefore the more flexible your protein is, the less accurate the principal axis calculation will be. 
 def calc_protein_principal_axis(ag):  
     com = ag.center_of_mass()
     mass = 12.011
@@ -41,6 +46,8 @@ def vecmag(vector):
 alphas = []
 betas = []
 gammas = []
+
+#This part of the script then calculates the principal axes at each frame, and then the Tait-Bryan euler angles of the protein (Tilt, Spin, Rotation). Because of the way MDAnalysis positions the protein, The Principal Axis vectors must be corrected for direction, which the negative value check does. This was checked with a similar calculation done using the Orient plugin in VMD along with the Linear Algebra plugin. 
 for ts in u.trajectory[::10]:  
     prinaxes = calc_protein_principal_axis(ag)
     xprinaxis = prinaxes[0]
@@ -68,3 +75,4 @@ for ts in u.trajectory[::10]:
 betaarray = np.degrees(np.array(betas))
 alphaarray = np.degrees(np.array(alphas))
 gammaarray = np.degrees(np.array(gammas))
+
